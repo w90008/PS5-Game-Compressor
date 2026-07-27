@@ -54,26 +54,36 @@ CFLAGS_COMMON += -DMINIZ_USE_UNALIGNED_LOADS_AND_STORES=1
 FAST_SRCS := src/pfs_compress.c src/pfs_decompress.c src/pfs_repair.c src/pfs_ampr_hotswap.c src/pfs_block_pipeline.c src/pfs_validate_hash.c src/miniz_tinfl.c
 FAST_OBJS := $(patsubst %.c,build/%.o,$(FAST_SRCS))
 
+# ==========================
+# zlib (Linux / GitHub Actions)
+# ==========================
+
 PFSC_ENCODER ?= runtime
 PFSC_ZLIB_LEVEL ?= 7
 PFSC_THRESHOLD_GAIN ?= 5
 PFSC_FORCE_RAW_EXEC ?= 1
-ZLIB_INCLUDE ?= /Users/jumasayeh/Developer/etaHEN/Source\ Code/include
-ZLIB_LIB ?= /Users/jumasayeh/Developer/etaHEN/Source\ Code/lib/libz.a
 
 ifneq ($(filter $(PFSC_ENCODER),runtime zlib miniz),)
+
 CFLAGS_COMMON += -DGC_PFSC_ZLIB_LEVEL=$(PFSC_ZLIB_LEVEL)
 CFLAGS_COMMON += -DGC_PFSC_THRESHOLD_GAIN=$(PFSC_THRESHOLD_GAIN)
 CFLAGS_COMMON += -DGC_PFSC_FORCE_RAW_EXEC=$(PFSC_FORCE_RAW_EXEC)
-CFLAGS_COMMON += -I$(ZLIB_INCLUDE)
+
+# استخدم pkg-config إذا كان متوفرًا
+CFLAGS_COMMON += $(shell pkg-config --cflags zlib 2>/dev/null)
+
 else
 $(error unsupported PFSC_ENCODER=$(PFSC_ENCODER), expected runtime, zlib, or miniz)
 endif
 
 FAST_CFLAGS := $(filter-out -Os,$(CFLAGS_COMMON)) -O2
+
 LDFLAGS_COMMON := -Wl,--gc-sections -flto
+
 LDADD := -lSceNotification -lSceSystemService
-LDADD += $(ZLIB_LIB)
+
+# اربط مع zlib الموجود بالنظام
+LDADD += $(shell pkg-config --libs zlib 2>/dev/null || echo -lz)
 
 all: $(BIN)
 
