@@ -1,0 +1,13 @@
+- name: Install dependencies
+  run: |
+    sudo apt update
+    sudo apt install -y \
+      build-essential \
+      clang-18 \
+      lld-18 \
+      llvm-18 \
+      wget \
+      unzip \
+      pkg-config \
+      zlib1g-dev \
+      python3
